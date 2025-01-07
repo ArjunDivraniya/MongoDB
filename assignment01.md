@@ -99,21 +99,21 @@ db.students.find({department:"Computer Science"})
   
   - Courses enrolled (e.g., "CS101").
   ```
-  db.students.find({coursesEnrolled:"CS101"})
+        db.students.find({coursesEnrolled:"CS101"})
   ```
 
 - Update the courses for a specific student (e.g., adding a new course).
 
 ```
 db.students.updateOne(
-
     {rollNumber:102},
     {$push:{coursesEnrolled:"CS104"}
-    
-    })
+     })
 ```
 
 - Delete a student or course from the database.
+
+
 ```
 db.students.deleteOne({name:"Mahir"})
 ```
