@@ -45,7 +45,7 @@ db.students.insertMany([
   - Credits: 3  
   - Instructor: `Prof. Krishna`
 
-  ```
+```
  db.courses.insertMany([
   {
     courseCode: "CS202",
