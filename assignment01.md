@@ -87,8 +87,7 @@ db.courses.insertMany([
 ```
 - Query data based on:
   - Department (e.g., "Computer Science").
-  ```
-  
+``` 
 db.students.find({department:"Computer Science"})
 ```
   - Year (e.g., "2").
