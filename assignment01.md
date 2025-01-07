@@ -91,11 +91,12 @@ db.courses.insertMany([
   
 db.students.find({department:"Computer Science"})
 ```
-
   - Year (e.g., "2").
+  
   ```
   db.students.find({year:2})
   ```
+  
   - Courses enrolled (e.g., "CS101").
   ```
   db.students.find({coursesEnrolled:"CS101"})
