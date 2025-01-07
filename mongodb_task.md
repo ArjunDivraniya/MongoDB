@@ -137,12 +137,16 @@ db.courses.find({credits:3})
 #### **Task 8: Find students who have enrolled in more than 2 courses**  
 - Use `$size` operator to query students who are enrolled in more than 2 courses.
 
+```
+db.students.find({$expr:{$gt:[{$size:"$coursesEnrolled"},2]}})
+```
+
+
 #### **Task 9: Use the `$in` operator to find students enrolled in multiple courses**  
 - Use the `$in` operator to find students who are enrolled in either `CS101` or `MATH202`.
 
 ```
-db.students.find(
-{$or:[{courses:"PHYS101"},{courses:"MATH101"}]})
+db.students.find({coursesEnrolled:{$in:["PHYS101","MATH101"]}})
 ```
 
 #### **Task 10: Fetch all students from a specific department (e.g., CSE)**  
@@ -172,16 +176,17 @@ db.students.find({year:{$gte:2,$lte:3}})
 - Use the `$group` stage of aggregation to group students by department and count them.
 
 ```
-
+db.students.aggregate([
+ 
+  { $group: { _id: "$year", totalStudents: { $sum: 1 } } }
+]);
+```
 
 #### **Task 14: Group courses by credits**  
 - Group courses by their credit value and count how many courses there are for each credit value.
 
 ```
-db.students.aggregate([
-  { $match: { department: "CSE" } },
-  { $group: { _id: "$year", totalStudents: { $sum: 1 } } }
-]);
+db.courses.aggregate({$group:{_id:"$credits",totalStudents:{$sum:1}}})
 ```
 
 
@@ -189,11 +194,25 @@ db.students.aggregate([
 - Query for the course with the highest number of credits using the `$sort` operator.
 
 ```
+db.courses.aggregate([
+  {
+    $sort: { credits: -1 } 
+  },
+  {
+    $limit: 1 
+  }
+]);
+```
 
 
 #### **Task 16: Use the `$and` operator for filtering students**  
 - Find all students who belong to the `CSE` department and are enrolled in more than 2 courses.
 
+```
+db.students.find({$and:[{department:"Computer Science"},
+
+                        {$expr:{$gt:[{$size:"$courses"},2]}}
+]})
 ```
 
 
@@ -208,12 +227,18 @@ db.students.updateMany({},{$push:{activestatus:"true"}})
 - Rename the `coursesEnrolled` field in the `students` collection to `enrolledCourses`.
 
 ```
+db.students.updateMany({},{$rename:{"courses":"enrolledCourses"}})
 
+```
 
 #### **Task 19: Set default values for new fields in all student documents**  
 - Add a field `graduationYear` with a default value for all students.
 
 ```
+db.students.updateMany({},{$set:{graduationYear:2025}})
+```
+
+
 
 
 #### **Task 20: Use the `$push` operator to add a new course to a student’s course list**  
@@ -258,8 +283,10 @@ db.students.find({$and:[{courses:"MATH101"},{courses:"PHYS101"}]})
 #### **Task 24: Use `$regex` to search for students whose name starts with "A"**  
 - Use regular expressions to search for students whose names begin with the letter "A".
 
+
 #### **Task 25: Use `$exists` to find students with enrolled courses**  
 - Query students who have an entry in the `coursesEnrolled` array.
+
 
 #### **Task 26: Add a field to store students' grades for each course**  
 - Add a new field `grades` to the `students` collection and store an array of grades for each course.
@@ -285,11 +312,24 @@ db.students.updateMany(
 #### **Task 28: Use `$size` operator to query students with exactly 2 courses enrolled**  
 - Query students who have enrolled in exactly two courses.
 
+```
+db.students.find({
+  courses: { $size: 2 } 
+});
+```
 #### **Task 29: Perform a text search for a course title**  
 - Use text indexing to search for the course `Digital Electronics` in the `courses` collection.
 
+
+
+
+
 #### **Task 30: Create a compound index on department and year**  
 - Create a compound index on the fields `department` and `year` for better querying performance.
+
+```
+db.students.createIndex({department:1,year:1})
+```
 
 #### **Task 31: Use `$sort` to order students by their roll number**  
 - Sort the students in ascending order of their roll number.
@@ -302,6 +342,10 @@ db.students.find().sort({rollNumber:1})
 
 #### **Task 32: Create a unique index on the roll number**  
 - Create a unique index to ensure that the roll numbers in the `students` collection are unique.
+
+```
+db.students.createIndex({rollNumber:1})
+```
 
 #### **Task 33: Update the course name in the `courses` collection**  
 - Update the name of the course `CS101` to `Intro to Programming`.
@@ -317,14 +361,29 @@ db.courses.updateMany({courseCode:"CS301"},
 #### **Task 34: Create a backup of the `CodingGitaStudents` database**  
 - Use `mongodump` to back up the entire `CodingGitaStudents` database.
 
+
+
 #### **Task 35: Restore the `CodingGitaStudents` database from the backup**  
 - Use `mongorestore` to restore the database after a backup.
+
 
 #### **Task 36: Use `$project` to reshape data in aggregation**  
 - Project only the `name` and `department` of students using an aggregation query.
 
+```
+db.students.aggregate({$project:{name:1,department:1}})
+
+```
+
 #### **Task 37: Use `$unwind` to deconstruct the courses array**  
 - Use `$unwind` to split the `coursesEnrolled` array into individual documents.
+
+```
+db.students.aggregate([
+  { $unwind: "$courses" }
+]);
+```
+
 
 #### **Task 38: Use `$limit` to retrieve only the first 3 students**  
 - Use `$limit` to limit the result to the first 3 students in the `students` collection.
@@ -344,6 +403,20 @@ db.students.find().skip(2)
 
 #### **Task 40: Use `$lookup` to join student data with courses**  
 - Use `$lookup` to fetch the course information for students.
+```
+db.students.aggregate([
+  {
+    $lookup: {
+      from: "courses",            
+      localField: "coursesEnrolled", 
+      foreignField: "_id",         
+      as: "enrolledCourses"      
+    }
+  }
+]);
+```
+
+
 
 #### **Task 41: Create a new collection for storing `studentFeedback`**  
 - Create a collection `studentFeedback` with fields: `studentRollNumber`, `feedbackText`, `date`.
@@ -387,13 +460,38 @@ db.studentsfeedback.insertMany([
 #### **Task 42: Query the `studentFeedback` collection to find feedback from a specific student**  
 - Use `find()` to retrieve feedback from `Jenil`.
 
+```
+db.studentsfeedback.find({ studentRollNumber: "CS1001" });
+
+```
+
 #### **Task 43: Use `$set` to update multiple fields at once**  
 - Use the `$set` operator to update the `department` and `coursesEnrolled` fields for `Arjun`.
 
+```
+db.students.updateOne({name:"Priya Sharma"},
+                      {$set:{department:"EC",
+courses:["cs","phys","math"]
+}}
+)
+```
 #### **Task 44: Create a custom index on the `coursesEnrolled` field**  
 - Create an index on the `coursesEnrolled` array for faster querying.
 
+```
+db.students.createIndex({courses:1})
+```
+
+
 #### **Task 45: Perform a query on nested documents in `students` collection**  
 - Query for students who have grades `A` in their courses.
+```
+db.students.updateOne({name:"Priya Sharma"},
+                      {$set:{department:"EC",
+courses:["cs","phys","math"]
+}}
+)
+```
+
 
 ---
